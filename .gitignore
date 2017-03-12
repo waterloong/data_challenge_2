@@ -1,0 +1,10 @@
+# Created by .ignore support plugin (hsz.mobi)
+.
+.DS_Store
+.Rhistory
+.idea/
+FacesDataChallenge.mat
+data_challenge_2.iml
+*.csv
+*_test/
+*_train/

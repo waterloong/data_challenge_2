@@ -1,8 +1,6 @@
 import os
 import cv2
 import scipy.io as sio
-from sklearn.decomposition import PCA
-import sklearn
 import numpy as np
 
 
@@ -18,7 +16,7 @@ images = []
 bounds = []
 
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/train')
-for i in range(Ytrain.shape[1]):
+for i in range(Ytrain.shape[0]):
     images.append(cv2.imread(str(i + 1) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
 
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_train')
@@ -32,7 +30,8 @@ for k in range(Ytrain.shape[0]):
     
     # Threshold for an optimal value, it may vary depending on the image.
     index = dst > 0.009 * dst.max()
-    img = images[k].copy()
+    #img = cv2.fastNlMeansDenoising(images[k])
+    img = images[k]
     width = img.shape[1]
     height= img.shape[0]
     xmin = width
@@ -48,14 +47,15 @@ for k in range(Ytrain.shape[0]):
                 ymax = max(i, ymax)
     b = (xmin, ymin, xmax, ymax)
     transformed = img[ymin:(ymax + 1), xmin:(xmax + 1)]
+    cv2.imwrite(str(k) + ".png", transformed)
     transformed = cv2.resize(transformed, (90, 90), interpolation = cv2.INTER_CUBIC)
     transformedTrain[k] = transformed.flatten()
-    cv2.imwrite(str(k) + ".png", transformed)
+
     bounds.append(b)
 
 from sklearn import svm
 lin_clf = svm.LinearSVC()
-lin_clf.fit(transformedTrain, Ytrain) 
+print lin_clf.fit(transformedTrain[:400, :], Ytrain[:400, :]).score(transformedTrain[400:, :], Ytrain[400:, :])
 
 testImage = []
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/test')
@@ -64,6 +64,7 @@ for i in range(Xtest.shape[0]):
 
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_test')
 transformedTest = np.empty((Xtest.shape[0], 8100))
+theta = 0.009
 for k in range(Xtest.shape[0]):
     gray = np.float32(testImage[k])
     dst = cv2.cornerHarris(gray, 2, 3, 0.04)
@@ -72,8 +73,8 @@ for k in range(Xtest.shape[0]):
     dst = cv2.dilate(dst, None)
     
     # Threshold for an optimal value, it may vary depending on the image.
-    index = dst > 0.009 * dst.max()
-    img = testImage[k].copy()
+    index = dst > theta * dst.max()
+    img = cv2.fastNlMeansDenoising(testImage[k])
     width = img.shape[1]
     height= img.shape[0]
     xmin = width
@@ -89,13 +90,15 @@ for k in range(Xtest.shape[0]):
                 ymax = max(i, ymax)
     b = (xmin, ymin, xmax, ymax)
     transformed = img[ymin:(ymax + 1), xmin:(xmax + 1)]
+    cv2.imwrite(str(k) + ".png", transformed)
     transformed = cv2.resize(transformed, (90, 90), interpolation = cv2.INTER_CUBIC)
     transformedTest[k] = transformed.flatten()
-    cv2.imwrite(str(k) + ".png", transformed)
-    
+
+
+
 svm_result = lin_clf.predict(transformedTest)
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/')
-np.savetxt("svm_result2.csv", np.dstack((np.arange(1, svm_result.size+1),svm_result))[0],"%d,%d",header="Id,ClassLabel")
+np.savetxt("svm_result2.csv", np.dstack((np.arange(1, svm_result.size+1),svm_result))[0],"%d,%d",header="Id,ClassLabel", comments='')
 
 
 
