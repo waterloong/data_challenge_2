@@ -26,11 +26,11 @@ for i in range(150):
     image = cv2.imread(str(i) + '.png', 0)
     testImages.append(image)
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2')
-
-with open('label.csv', 'w') as resultFile:
-    resultFile.write('Id, ClassLabel\n')
-    for i in range(425):
-        resultFile.write('%d, %d\n' % (i + 1, Ytrain[i, 0]))
+#
+# with open('label.csv', 'w') as resultFile:
+#     resultFile.write('Id, ClassLabel\n')
+#     for i in range(425):
+#         resultFile.write('%d, %d\n' % (i + 1, Ytrain[i, 0]))
 
 with open('lbph_result.csv', 'w') as resultFile:
     resultFile.write('Id,ClassLabel\n')

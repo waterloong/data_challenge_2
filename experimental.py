@@ -56,6 +56,23 @@ for i in range(Ytrain.shape[0]):
     ystart = findTurningPoint(varh, size)
     xstart = findTurningPoint(varv, size)
     cv2.imwrite(str(i) + '.png', img[ystart:(ystart + size), xstart:(xstart + size)])
+
+images = []
+os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/test')
+for i in range(150):
+    img = cv2.imread(str(i) + '.png', 0)
+    #img = cv2.fastNlMeansDenoising(img)
+    images.append(img)
+
+os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_test')
+for i in range(150):
+    img = images[i]
+    varv = np.mean(img, 0)
+    varh = np.mean(img, 1)
+    size = 90
+    ystart = findTurningPoint(varh, size)
+    xstart = findTurningPoint(varv, size)
+    cv2.imwrite(str(i) + '.png', img[ystart:(ystart + size), xstart:(xstart + size)])
     # cv2.imwrite(str(i) + '.png', extractImage(img))
 
 

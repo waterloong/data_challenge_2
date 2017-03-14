@@ -16,19 +16,13 @@ import pickle
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/')
 dataSet = sio.loadmat('FacesDataChallenge.mat')
 
-Xtest = dataSet['X_test'].transpose()
-Xtrain = dataSet['X_train'].transpose()
+
 Ytrain = dataSet['Y_train'].transpose()
 
 Xtrain = []
-os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/train')
-for i in range(Ytrain.shape[0]):
+os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_train')
+for i in range(425):
     Xtrain.append(cv2.imread(str(i) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
-
-Xtest = []
-os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/test')
-for i in range(Ytrain.shape[0]):
-    Xtest.append(cv2.imread(str(i) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
 
 # Shuffle the data
 X, Y = shuffle(Xtrain, Ytrain)
@@ -43,32 +37,32 @@ img_prep.add_featurewise_stdnorm()
 img_aug = ImageAugmentation()
 img_aug.add_random_flip_leftright()
 img_aug.add_random_rotation(max_angle=25.)
-img_aug.add_random_blur(sigma_max=3.)
+#img_aug.add_random_blur(sigma_max=3.)
 
 # Define our network architecture:
 
 # Input is a 32x32 image with 3 color channels (red, green and blue)
-network = input_data(shape=[None, 110, 110, 1],
+network = input_data(shape=[None, 90, 9],
                      data_preprocessing=img_prep,
                      data_augmentation=img_aug)
 
 # Step 1: Convolution
-network = conv_2d(network, 110, 3, activation='relu')
+network = conv_2d(network, 90, 3, activation='relu')
 
 # Step 2: Max pooling
 network = max_pool_2d(network, 2)
 
 # Step 3: Convolution again
-network = conv_2d(network, 220, 3, activation='relu')
+network = conv_2d(network, 180, 3, activation='relu')
 
 # Step 4: Convolution yet again
-network = conv_2d(network, 220, 3, activation='relu')
+network = conv_2d(network, 180, 3, activation='relu')
 
 # Step 5: Max pooling again
 network = max_pool_2d(network, 2)
 
 # Step 6: Fully-connected 512 node neural network
-network = fully_connected(network, 12100, activation='relu')
+network = fully_connected(network, 8100, activation='relu')
 
 # Step 7: Dropout - throw away some data randomly during training to prevent over-fitting
 network = dropout(network, 0.5)
@@ -87,6 +81,11 @@ model = tflearn.DNN(network, tensorboard_verbose=0, checkpoint_path='bird-classi
 # Train it! We'll do 100 training passes and monitor it as it goes.
 print(model.fit(X, Y, n_epoch=1, shuffle=True, show_metric=True, \
                 batch_size=330, snapshot_epoch=True, run_id='image-classifier').score(X, Y))
+
+Xtest = []
+os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_test')
+for i in range(150):
+    Xtest.append(cv2.imread(str(i) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
 
 cnn_result = model.predict(Xtest)
 
