@@ -6,10 +6,11 @@ import numpy as np
 import tflearn
 from tflearn.data_utils import shuffle
 from tflearn.layers.core import input_data, dropout, fully_connected
-from tflearn.layers.conv import conv_2d, max_pool_2d
 from tflearn.layers.estimator import regression
 from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
+from tflearn.layers.conv import highway_conv_2d, max_pool_2d, conv_2d
+from tflearn.layers.normalization import local_response_normalization, batch_normalization
 import pickle
 
 # Load the data set
@@ -17,16 +18,19 @@ os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/')
 dataSet = sio.loadmat('FacesDataChallenge.mat')
 
 
-Ytrain = dataSet['Y_train'].transpose()
+Ytrain = dataSet['Y_train'].reshape([-1, 1])
 
 Xtrain = []
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_train')
 for i in range(425):
-    Xtrain.append(cv2.imread(str(i) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
+    img = cv2.imread(str(i) + '.png', 0)
+    Xtrain.append(np.array(img, dtype = float))#cv2.IMREAD_GRAYSCALE))
 
 # Shuffle the data
 X, Y = shuffle(Xtrain, Ytrain)
+X = X.reshape([-1, 90, 90, 1])
 
+Y = Y.reshape([-1, ])
 # Make sure the data is normalized
 img_prep = ImagePreprocessing()
 img_prep.add_featurewise_zero_center()
@@ -40,52 +44,34 @@ img_aug.add_random_rotation(max_angle=25.)
 #img_aug.add_random_blur(sigma_max=3.)
 
 # Define our network architecture:
+network = input_data(shape=[None, 90, 90, 1])
 
-# Input is a 32x32 image with 3 color channels (red, green and blue)
-network = input_data(shape=[None, 90, 9],
-                     data_preprocessing=img_prep,
-                     data_augmentation=img_aug)
+#                     data_preprocessing=img_prep,
+#                     data_augmentation=img_aug)
 
-# Step 1: Convolution
-network = conv_2d(network, 90, 3, activation='relu')
-
-# Step 2: Max pooling
+network = conv_2d(network, 32, 3, activation='relu', regularizer="L2")
 network = max_pool_2d(network, 2)
-
-# Step 3: Convolution again
-network = conv_2d(network, 180, 3, activation='relu')
-
-# Step 4: Convolution yet again
-network = conv_2d(network, 180, 3, activation='relu')
-
-# Step 5: Max pooling again
+network = local_response_normalization(network)
+network = conv_2d(network, 64, 3, activation='relu', regularizer="L2")
 network = max_pool_2d(network, 2)
+network = local_response_normalization(network)
+network = fully_connected(network, 128, activation='tanh')
+network = dropout(network, 0.8)
+network = fully_connected(network, 256, activation='tanh')
+network = dropout(network, 0.8)
+network = fully_connected(network, 20, activation='softmax')
+network = regression(network, optimizer='adam', learning_rate=0.01,
+                     loss='categorical_crossentropy', name='target')
 
-# Step 6: Fully-connected 512 node neural network
-network = fully_connected(network, 8100, activation='relu')
+model = tflearn.DNN(network, tensorboard_verbose=0)
+model.fit(X, Y, n_epoch=1, show_metric=True, run_id='convnet_highway_mnist')
 
-# Step 7: Dropout - throw away some data randomly during training to prevent over-fitting
-network = dropout(network, 0.5)
-
-# Step 8: Fully-connected neural network with two outputs (0=isn't a bird, 1=is a bird) to make the final prediction
-network = fully_connected(network, 2, activation='softmax')
-
-# Tell tflearn how we want to train the network
-network = regression(network, optimizer='adam',
-                     loss='categorical_crossentropy',
-                     learning_rate=0.001)
-
-# Wrap the network in a model object
-model = tflearn.DNN(network, tensorboard_verbose=0, checkpoint_path='bird-classifier.tfl.ckpt')
-
-# Train it! We'll do 100 training passes and monitor it as it goes.
-print(model.fit(X, Y, n_epoch=1, shuffle=True, show_metric=True, \
-                batch_size=330, snapshot_epoch=True, run_id='image-classifier').score(X, Y))
-
-Xtest = []
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_test')
+Xtest = np.empty([150, 90, 90])
 for i in range(150):
-    Xtest.append(cv2.imread(str(i) + '.png', 0))#cv2.IMREAD_GRAYSCALE))
+    Xtest[i] = np.array(cv2.imread(str(i) + '.png', 0), dtype = float)
+
+Xtest = Xtest.reshape([-1, 90, 90, 1])
 
 cnn_result = model.predict(Xtest)
 
