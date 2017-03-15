@@ -6,5 +6,5 @@
 FacesDataChallenge.mat
 data_challenge_2.iml
 *.csv
-*_test/
-*_train/
+train/
+test/
