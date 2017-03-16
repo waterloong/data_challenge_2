@@ -4,7 +4,6 @@ import cv2
 import scipy.io as sio
 import numpy as np
 import keras
-from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
@@ -12,7 +11,7 @@ from keras import backend as K
 
 batch_size = 128
 num_classes = 20
-epochs = 100
+epochs = 200
 
 # input image dimensions
 img_rows, img_cols = 90, 90
@@ -23,10 +22,11 @@ dataSet = sio.loadmat('FacesDataChallenge.mat')
 
 
 Ytrain = dataSet['Y_train']
+Ytrain = np.concatenate((Ytrain, Ytrain), 0)
 
-Xtrain = np.empty(shape=(425, 90, 90))
+Xtrain = np.empty(shape=(850, 90, 90))
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/transformed_train')
-for i in range(425):
+for i in range(850):
     img = cv2.imread(str(i) + '.png', 0)
     Xtrain[i] = np.array(img, dtype = float)
 
@@ -58,14 +58,14 @@ print(Xtest.shape[0], 'test samples')
 Ytrain = keras.utils.to_categorical(Ytrain - 1, num_classes)
 
 model = Sequential()
-model.add(Conv2D(32, kernel_size=(3, 3),
+model.add(Conv2D(128, kernel_size=(5, 5),
                  activation='relu',
                  input_shape=input_shape))
-model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (5, 5), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
 model.add(Flatten())
-model.add(Dense(128, activation='relu'))
+model.add(Dense(32, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(num_classes, activation='softmax'))
 

@@ -9,7 +9,11 @@ dataSet = sio.loadmat('FacesDataChallenge.mat')
 
 Xtest = dataSet['X_test'].transpose()
 Xtrain = dataSet['X_train'].transpose()
-Ytrain = dataSet['Y_train'].transpose()
+Ytrain = dataSet['Y_train']
+Ytrain = dataSet['Y_train']
+Ytrain = np.concatenate((Ytrain, Ytrain, Ytrain), 1)
+Ytrain = np.concatenate((Ytrain, Ytrain), 1)
+Ytrain = Ytrain.transpose()
 
 
 bounds = []
@@ -38,7 +42,7 @@ for k in range(Xtest.shape[0]):
 
 svm_result = lin_clf.predict(transformedTest)
 os.chdir('/Users/William/Google Drive/UW/STAT441/data_challenge_2/')
-np.savetxt("svm_result4.csv", np.dstack((np.arange(1, svm_result.size+1),svm_result))[0],"%d,%d",header="Id,ClassLabel", comments='')
+np.savetxt("svm_result6.csv", np.dstack((np.arange(1, svm_result.size+1),svm_result))[0],"%d,%d",header="Id,ClassLabel", comments='')
 
 
 '''

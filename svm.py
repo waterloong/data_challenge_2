@@ -12,7 +12,6 @@ Xtest = dataSet['X_test'].transpose()
 Xtrain = dataSet['X_train'].transpose()
 Ytrain = dataSet['Y_train'].transpose()
 
-
 images = []
 bounds = []
 

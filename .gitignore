@@ -8,3 +8,6 @@ data_challenge_2.iml
 *.csv
 train/
 test/
+*.png
+*.jpg
+
